@@ -1,0 +1,32 @@
+{
+  "name": "friend-network-generator",
+  "version": "1.0.0",
+  "description": "Generates a network of friends based off of a starting account from Twitter",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron ./",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/duper51/friend-network-generator.git"
+  },
+  "keywords": [
+    "networks",
+    "twitter",
+    "data"
+  ],
+  "author": "Ian Otto (@duper51)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/duper51/friend-network-generator/issues"
+  },
+  "homepage": "https://github.com/duper51/friend-network-generator#readme",
+  "devDependencies": {
+    "electron": "^4.0.5"
+  },
+  "dependencies": {
+    "electron-oauth-twitter": "^1.2.0",
+    "twitter": "^1.7.1"
+  }
+}

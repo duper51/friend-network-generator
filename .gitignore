@@ -1,0 +1,8 @@
+# Get rid of PhpStorm Garbage
+.idea/
+
+# We don't want node_modules committed
+node_modules/
+
+# Don't keep config.js
+config.js
