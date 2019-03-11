@@ -2,19 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PewDiePie's Channel</title>
+    <title>FNG - Status Page</title>
     <link rel="stylesheet" href="css/bootstrap.min.css">
 </head>
 <body>
 <div class="container">
-    <div class="col-6 offset-3" id="main_window_col">
+    <div class="col-8 offset-3" id="main_window_col">
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Crawl Status</h5>
             </div>
             <strong>Accounts Crawled: </strong><span id="acc_crawled">0</span><br/>
+            <strong>Known Nodes: </strong><span id="known_nodes">0</span><br/>
             <strong>Average Out-Degree: </strong><span id="out_deg">0</span><br/>
-
+            <strong>Matched Friendships: </strong><span id="matched">0</span><br/>
+            IN PROGRESS
         </div>
     </div>
 </div>
@@ -24,8 +26,9 @@
 <script src="js/bootstrap.bundle.min.js"></script>
 <script>if (window.module) module = window.module;</script>
 <script>
-    const { ipcRenderer } = require("electron");
-
+    const { ipcRenderer, dialog } = require("electron");
+    const Twitter = require('twitter');
+    let cli;
     /**
      * Takes in a object of edges (obj[edge1] = {edge2};) and converts it to CSV format. Then sends the string data to the
      * main process to write, so as to not freeze the renderer process.
@@ -45,6 +48,74 @@
         }
         ipcRenderer.send("write-file", {fileName: fileName, data: data});
     }
+
+    let dataHold = {};
+
+    let alreadyCrawled = [];
+
+    function insertToData(dataHold, node1, node2) {
+        if(dataHold.hasOwnProperty(node1)) {
+            dataHold[node1].append(node2);
+        } else {
+            dataHold[node1] = {node2};
+        }
+    }
+
+    function crawl_scheduler(user_ids, new_crawls) {
+        if(!new_crawls) new_crawls = [];
+        crawl(user_ids.pop(), (idl) => {
+            new_crawls.concat(idl);
+            if(user_ids.length === 0) {
+                setTimeout(crawl_scheduler, 60000, new_crawls.filter(t => !alreadyCrawled.contains(t)))
+            }
+        });
+        if(user_ids.length > 0)
+            setTimeout(crawl_scheduler, 60000, user_ids, new_crawls);
+    }
+
+    function crawl(user_id, cb) {
+        cli.get('friends/ids', {stringify_ids: true, user_id: user_id}, (e, r) => {
+            if(e) {
+                console.error(e);
+                dialog.showErrorBox("Big Meme", "Twitter did an oopsie during crawl");
+            } else {
+                alreadyCrawled.push(user_id);
+                // collect ids and store them
+                for(let outId of r.ids) {
+                    insertToData(dataHold, user_id, outId);
+                }
+                $("#acc_crawled").text(parseInt($("#acc_crawled").text()) + 1);
+                $("#known_nodes").text(parseInt($("#known_nodes").text()) + r.ids.length);
+                $("#out_deg").text(parseInt($("#known_nodes").text())/parseInt($("#acc_crawled").text()));
+                if(cb) cb(r.ids);
+            }
+        });
+    }
+
+    function beginTwitterCrawl() {
+        let urlParams = new URLSearchParams(window.location.search);
+
+        let config = {};
+
+        for(let key of urlParams.keys()) {
+            config[key] = urlParams.get(key);
+        }
+
+        cli = new Twitter(config);
+        cli.get('users/lookup', {screen_name: config['start_username']}, (e, r) => {
+            if(e) {
+                console.error(e);
+                dialog.showErrorBox("Big Meme", "Twitter did an oopsie");
+            } else {
+                console.log("We fetched the user ID of the starter node, beginning crawl...");
+                crawl(r.id_str, (idl) => {
+                    crawl_scheduler(idl);
+                });
+            }
+        });
+    }
+
+    $(beginTwitterCrawl());
 </script>
 </body>
 </html>
