@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PewDiePie's Channel</title>
+    <title>Enter Twitter API Information</title>
     <link rel="stylesheet" href="css/bootstrap.min.css">
 </head>
 <body>
 <div class="container">
-    <div class="col-6 offset-3">
+    <div class="col-6 offset-3" id="main_window_col">
         <form id="main">
             <div class="form-group">
                 <label for="consumer_key">Consumer Key</label>
@@ -26,6 +26,10 @@
                 <input type="text" class="form-control" id="access_token_secret" placeholder="Access Token Secret">
             </div>
             <div class="form-group">
+                <label for="access_token_secret">Starting Username</label>
+                <input type="text" class="form-control" id="start_username" placeholder="Starting Username">
+            </div>
+            <div class="form-group">
                 <input id="startsubmit" type="submit" class="btn btn-primary">
             </div>
         </form>
@@ -37,17 +41,17 @@
 <script src="js/bootstrap.bundle.min.js"></script>
 <script>if (window.module) module = window.module;</script>
 <script>
+    const { ipcRenderer } = require("electron");
     const formToJSON = elements => [].reduce.call(elements, (data, element) => {
-
         data[element.id] = element.value;
         return data;
 
     }, {});
-
     $("#main").on('submit', function (e) {
         e.preventDefault();
         let dat = formToJSON($("#main").find("input"));
         console.log(dat);
+        ipcRenderer.send("prepare-status-page", dat);
     });
 </script>
 </body>

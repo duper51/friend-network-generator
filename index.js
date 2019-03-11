@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -7,6 +7,10 @@ let win;
 function createWindow () {
     // Create the browser window.
     win = new BrowserWindow({ width: 800, height: 600 });
+
+    ipcMain.on('prepare-status-page', function (e, arg) {
+        win.loadFile("html/status.html", {query: arg});
+    });
 
     // and load the index.html of the app.
     win.loadFile('html/index.html');
@@ -21,14 +25,6 @@ function createWindow () {
         // when you should delete the corresponding element.
         win = null
     });
-
-    var Twitter = require('twitter');
-    var client = new Twitter({
-        consumer_key: '',
-        consumer_secret: '',
-        access_token_key: '',
-        access_token_secret: ''
-    });
 }
 
 // This method will be called when Electron has finished
@@ -41,7 +37,7 @@ app.on('window-all-closed', () => {
     // On macOS it is common for applications and their menu bar
     // to stay active until the user quits explicitly with Cmd + Q
     if (process.platform !== 'darwin') {
-        app.quit()
+        app.quit();
     }
 });
 
@@ -51,4 +47,4 @@ app.on('activate', () => {
     if (win === null) {
         createWindow();
     }
-});;
+});

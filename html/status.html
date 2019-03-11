@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PewDiePie's Channel</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+</head>
+<body>
+<div class="container">
+    <div class="col-6 offset-3" id="main_window_col">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Crawl Status</h5>
+            </div>
+            <strong>Accounts Crawled: </strong><span id="acc_crawled">0</span><br/>
+            <strong>Average Out-Degree: </strong><span id="out_deg">0</span><br/>
+
+        </div>
+    </div>
+</div>
+<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+<script src="js/jquery.min.js"></script>
+<script src="js/popper.js"></script>
+<script src="js/bootstrap.bundle.min.js"></script>
+<script>if (window.module) module = window.module;</script>
+<script>
+    const { ipcRenderer } = require("electron");
+
+    /**
+     * Takes in a object of edges (obj[edge1] = {edge2};) and converts it to CSV format. Then sends the string data to the
+     * main process to write, so as to not freeze the renderer process.
+     * @param fileName the filename to write to
+     * @param data
+     */
+    function writeCSV(fileName, data) {
+        let strRep = "firstEdge,secondEdge\n";
+        for(let objKey in data.keys()) {
+            if(data.hasOwnProperty(objKey)) {
+                for (let set2 in data[objKey]) {
+                    if(data[objKey].hasOwnProperty(set2)) {
+                        strRep += `${objKey},${set2}\n`;
+                    }
+                }
+            }
+        }
+        ipcRenderer.send("write-file", {fileName: fileName, data: data});
+    }
+</script>
+</body>
+</html>
