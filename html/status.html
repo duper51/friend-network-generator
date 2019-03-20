@@ -16,7 +16,8 @@
             <strong>Known Nodes: </strong><span id="known_nodes">0</span><br/>
             <strong>Average Out-Degree: </strong><span id="out_deg">0</span><br/>
             <strong>Matched Friendships: </strong><span id="matched">0</span><br/>
-            IN PROGRESS
+            <strong>Running Crawl Every 60s</strong>
+            <a href="#" class="btn" onclick="writeCSV()">Write CSV</a>
         </div>
     </div>
 </div>
@@ -28,93 +29,55 @@
 <script>
     const { ipcRenderer, dialog } = require("electron");
     const Twitter = require('twitter');
-    let cli;
+    let config;
     /**
      * Takes in a object of edges (obj[edge1] = {edge2};) and converts it to CSV format. Then sends the string data to the
      * main process to write, so as to not freeze the renderer process.
      * @param fileName the filename to write to
      * @param data
      */
-    function writeCSV(fileName, data) {
-        let strRep = "firstEdge,secondEdge\n";
-        for(let objKey in data.keys()) {
-            if(data.hasOwnProperty(objKey)) {
-                for (let set2 in data[objKey]) {
-                    if(data[objKey].hasOwnProperty(set2)) {
-                        strRep += `${objKey},${set2}\n`;
-                    }
-                }
-            }
-        }
-        ipcRenderer.send("write-file", {fileName: fileName, data: data});
+    function writeCSV() {
+        console.log("WRRNUWNRQWNIOQWNIEIOQWNE");
+        ipcRenderer.send("write-file", "Do Run!");
     }
 
-    let dataHold = {};
-
-    let alreadyCrawled = [];
-
-    function insertToData(dataHold, node1, node2) {
-        if(dataHold.hasOwnProperty(node1)) {
-            dataHold[node1].append(node2);
+    function buildTwitterClient() {
+        if(config) {
+            console.log("built the big twitter boi!");
+            return new Twitter(config);
         } else {
-            dataHold[node1] = {node2};
+            console.error("Tried to build Twitter client, but had no config");
         }
-    }
-
-    function crawl_scheduler(user_ids, new_crawls) {
-        if(!new_crawls) new_crawls = [];
-        crawl(user_ids.pop(), (idl) => {
-            new_crawls.concat(idl);
-            if(user_ids.length === 0) {
-                setTimeout(crawl_scheduler, 60000, new_crawls.filter(t => !alreadyCrawled.contains(t)))
-            }
-        });
-        if(user_ids.length > 0)
-            setTimeout(crawl_scheduler, 60000, user_ids, new_crawls);
-    }
-
-    function crawl(user_id, cb) {
-        cli.get('friends/ids', {stringify_ids: true, user_id: user_id}, (e, r) => {
-            if(e) {
-                console.error(e);
-                dialog.showErrorBox("Big Meme", "Twitter did an oopsie during crawl");
-            } else {
-                alreadyCrawled.push(user_id);
-                // collect ids and store them
-                for(let outId of r.ids) {
-                    insertToData(dataHold, user_id, outId);
-                }
-                $("#acc_crawled").text(parseInt($("#acc_crawled").text()) + 1);
-                $("#known_nodes").text(parseInt($("#known_nodes").text()) + r.ids.length);
-                $("#out_deg").text(parseInt($("#known_nodes").text())/parseInt($("#acc_crawled").text()));
-                if(cb) cb(r.ids);
-            }
-        });
     }
 
     function beginTwitterCrawl() {
+        console.log("prepping things?");
+
         let urlParams = new URLSearchParams(window.location.search);
 
-        let config = {};
+        config = {};
 
         for(let key of urlParams.keys()) {
             config[key] = urlParams.get(key);
         }
 
-        cli = new Twitter(config);
-        cli.get('users/lookup', {screen_name: config['start_username']}, (e, r) => {
+        ipcRenderer.send('config', config);
+
+        buildTwitterClient().get('users/show', {screen_name: config['start_username']}, (e, r) => {
             if(e) {
                 console.error(e);
                 dialog.showErrorBox("Big Meme", "Twitter did an oopsie");
             } else {
                 console.log("We fetched the user ID of the starter node, beginning crawl...");
-                crawl(r.id_str, (idl) => {
-                    crawl_scheduler(idl);
-                });
+                ipcRenderer.send('start-crawl', r.id_str);
             }
         });
     }
-
+    ipcRenderer.on('statusUpdate', function (e, data) {
+        $('#acc_crawled').text(data.crawl_count);
+        $('#known_nodes').text(data.known_nodes);
+        $('#out_deg').text(data.out_degree);
+    });
     $(beginTwitterCrawl());
 </script>
 </body>

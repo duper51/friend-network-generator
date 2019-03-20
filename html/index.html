@@ -33,6 +33,10 @@
                 <input id="startsubmit" type="submit" class="btn btn-primary">
             </div>
         </form>
+        <div class="form-group">
+            <label for="remember_me">Remember Me (stores data locally)</label>
+            <input id="remember_me" class="form-control" type="checkbox">
+        </div>
     </div>
 </div>
 <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
@@ -51,8 +55,27 @@
         e.preventDefault();
         let dat = formToJSON($("#main").find("input"));
         console.log(dat);
+        if($("#remember_me").is(":checked")) {
+            console.log("Storing things in localStorage.");
+            localStorage.setItem("config", JSON.stringify(dat));
+        } else {
+            localStorage.clear();
+        }
         ipcRenderer.send("prepare-status-page", dat);
     });
+    $(function() {
+        //on ready loader
+        let conf = localStorage.getItem("config");
+        if(conf) {
+            conf = JSON.parse(conf);
+            for(let key in conf) {
+                if(conf.hasOwnProperty(key)) {
+                    console.log(key, ":", conf[key]);
+                    $("#" + key).val(conf[key]);
+                }
+            }
+        }
+    }());
 </script>
 </body>
 </html>

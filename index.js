@@ -18,6 +18,8 @@ function createWindow () {
     // Open the DevTools.
     win.webContents.openDevTools();
 
+    global.mainWin = win.webContents;
+
     // Emitted when the window is closed.
     win.on('closed', () => {
         // Dereference the window object, usually you would store windows
@@ -48,3 +50,5 @@ app.on('activate', () => {
         createWindow();
     }
 });
+
+require('./html/js/crawler');
