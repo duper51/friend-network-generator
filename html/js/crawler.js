@@ -85,30 +85,24 @@ function crawl(user_id, cb) {
 
 ipcMain.on('write-file', function() {
     let strRep = "firstEdge,secondEdge\n";
-    for(let objKey in Object.keys(dataHold)) {
+    for(let objKey of Object.keys(dataHold)) {
         if(dataHold.hasOwnProperty(objKey)) {
-            for (let set2 in dataHold[objKey]) {
-                if(dataHold[objKey].hasOwnProperty(set2)) {
-                    strRep += `${objKey},${set2}\n`;
-                }
+            for (let set2 of dataHold[objKey]) {
+                strRep += `${objKey},${set2}\n`;
             }
         }
     }
-    dialog.showSaveDialog(global.mainWin, {
-        title: "Choose CSV Save Location"
-    }, function (filename) {
-        console.log(fs);
-        fs.writeFile(filename, strRep, function (e2) {
-            console.log(e2);
-            if(e2) {
-                dialog.showErrorBox("CSV Save Failed", e2.code);
-            } else {
-                dialog.showMessageBox(global.mainWin, {
-                    type: "info",
-                    title: "CSV Saved",
-                    message: "The CSV was successfully saved!"
-                });
-            }
-        });
+    let filename = dialog.showSaveDialog(global.mainWin, {title: "Choose CSV Save Location"});
+    fs.writeFile(filename, strRep, function (e2) {
+        console.log(e2);
+        if(e2) {
+            dialog.showErrorBox("CSV Save Failed", e2.code);
+        } else {
+            dialog.showMessageBox(global.mainWin, {
+                type: "info",
+                title: "CSV Saved",
+                message: "The CSV was successfully saved!"
+            });
+        }
     });
 });
